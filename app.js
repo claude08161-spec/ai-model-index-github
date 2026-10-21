@@ -130,6 +130,11 @@
     return iso;
   };
   const labColor = l => (D.LABS[l] && D.LABS[l].color) || "#64748B";
+  const stampFmt = iso => {
+    if (!iso) return "—";
+    const i = iso.indexOf("T");
+    return i < 0 ? dt(iso) : dt(iso.slice(0, i)) + ", " + iso.slice(i + 1, i + 6) + " UTC";
+  };
   const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 
   /* ---------------- derived ---------------- */
@@ -255,6 +260,7 @@
           chipStat("С открытыми весами", open.length, "unlock"),
           chipStat("Дешевле $1 за 1M", D.MODELS.filter(m => m.blended !== null && m.blended < 1).length, "coins"),
           chipStat("Контекст ≥ 1M", D.MODELS.filter(m => m.ctx >= 1000000).length, "database"),
+          chipStat("Цены авто-проверены", stampFmt(D.META.autoChecked || D.META.snapshot), "git"),
         ]),
       ]),
     ]);
@@ -1239,7 +1245,7 @@
   function buildFooter() {
     const f = el("footer", { class: "ft" }, [el("div", { class: "wrap ft-in" }, [
       el("span", { html: icon("activity", 13) + " <b>AI Model Index</b>" }),
-      el("span", { text: "Снимок данных: " + dt(D.META.snapshot) + " · " + D.MODELS.length + " моделей · " + D.CATEGORIES.length + " категорий" }),
+      el("span", { text: "Снимок данных: " + dt(D.META.snapshot) + " · " + D.MODELS.length + " моделей · " + D.CATEGORIES.length + " категорий · авто-проверка цен: " + stampFmt(D.META.autoChecked || D.META.snapshot) }),
       el("span", { class: "sp muted", text: D.META.updateNote }),
     ])]);
     document.body.appendChild(f);

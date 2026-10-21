@@ -152,6 +152,18 @@ def clean(v):
     return v is not None and abs(v - round(v, 2)) < 1e-9
 
 
+WARN = []
+
+
+def load_safe(fn, label, fallback):
+    """source down or rate-limited (BenchLM free tier: 250 reads/mo) -> degrade, never die"""
+    try:
+        return fn()
+    except Exception as e:
+        WARN.append("%s unavailable: %s" % (label, e))
+        return fallback
+
+
 def median(xs):
     xs = sorted(xs)
     return xs[len(xs) // 2] if xs else None
@@ -181,11 +193,11 @@ def main():
     apply = "--apply" in sys.argv
     src = get if True else None
     print("Fetching models.dev ...")
-    mdev = load_models_dev()
+    mdev = load_safe(load_models_dev, "models.dev", {})
     print("Fetching OpenRouter ...")
-    ort = load_openrouter()
+    ort = load_safe(load_openrouter, "openrouter", {})
     print("Fetching BenchLM csv ...")
-    blm = load_benchlm()
+    blm = load_safe(load_benchlm, "benchlm", {})
     print("Sources: models.dev %d slugs, openrouter %d slugs, benchlm %d names" % (len(mdev), len(ort), len(blm)))
 
     raw = open(DATA_JS, encoding="utf-8").read()
@@ -285,10 +297,14 @@ def main():
     cands.sort()
 
     # ---- report
-    today = date.today().isoformat()
-    lines = ["# Auto-refresh report %s" % today, "",
+    now = datetime.now(timezone.utc)
+    today = now.strftime("%Y-%m-%d")
+    run_at = now.strftime("%H:%M")
+    stamp = today + "T" + run_at[:2] + ":00"
+    lines = ["# Auto-refresh report %s, run at %s UTC" % (today, run_at), "",
              "Sources: models.dev (first-party TOML), OpenRouter API, BenchLM pricing CSV.",
-             "Mode: %s" % ("APPLY" if apply else "dry-run"), "",
+             "Mode: %s" % ("APPLY" if apply else "dry-run"),
+             "Warnings: %s" % ("; ".join(WARN) if WARN else "none"), "",
              "## Changed (%d)" % len(changes), "",
              "| model | field | was | now | source |", "|---|---|---|---|---|"]
     lines += ["| %s | %s | %s | %s | %s |" % c for c in changes] or ["| - | - | - | - | - |"]
@@ -306,6 +322,12 @@ def main():
     open(ROOT + "/data-candidates.md", "w", encoding="utf-8").write(
         "# Candidates for manual addition (generated %s)\n\n" % today + "\n".join(
             "- `%s` — $%s / $%s per 1M" % (s, c["in"], c["out"]) for s, c in cands) + "\n")
+    # freshness stamps: autoChecked moves on EVERY applied run (visible proof of
+    # life on the site); snapshot/sourcesChecked move only when data actually changed
+    out = re.sub(r'autoChecked: "[^"]*"', 'autoChecked: "%s"' % stamp, out)
+    if apply and changes:
+        out = re.sub(r'snapshot: "\d{4}-\d{2}-\d{2}"', 'snapshot: "%s"' % today, out)
+        out = re.sub(r'sourcesChecked: "\d{4}-\d{2}-\d{2}"', 'sourcesChecked: "%s"' % today, out)
     if apply and out != raw:
         open(DATA_JS, "w", encoding="utf-8").write(out)
         print("\nAPPLIED: data.js rewritten (%d changes)" % len(changes))
