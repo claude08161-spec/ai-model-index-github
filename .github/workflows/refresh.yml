@@ -1,0 +1,45 @@
+# Weekly auto-refresh of prices and context windows.
+# The script only touches price/cache/ctx fields in data.js, never adds models,
+# never touches benchmarks or editorial fields, and writes a report + candidate
+# list that get committed alongside for manual review.
+name: refresh-data
+
+on:
+  schedule:
+    - cron: "0 6 * * 1"        # every Monday 06:00 UTC
+  workflow_dispatch: {}        # manual button in the Actions tab
+
+permissions:
+  contents: write
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Refresh data.js from public sources
+        run: python3 scripts/refresh_data.py --apply
+
+      - name: Rebuild single-file bundle
+        run: node scripts/build-standalone.mjs
+
+      - name: Commit changes (if any)
+        run: |
+          git config user.name  "ai-model-index-bot"
+          git config user.email "bot@users.noreply.github.com"
+          git add data.js standalone.html reports data-candidates.md
+          if git diff --cached --quiet; then
+            echo "Nothing changed this week."
+          else
+            git commit -m "data: weekly auto-refresh (prices, cache, context)"
+            git push
+          fi
