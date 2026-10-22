@@ -14,7 +14,7 @@ window.AMI = (function () {
     tagline: "Актуальная статистика нейросетей: кто где лучше, сколько стоит и как быстро работает",
     snapshot: "2026-10-22",
     sourcesChecked: "2026-10-20",
-    autoChecked: "2026-10-22T09:00",
+    autoChecked: "2026-10-22T12:00",
     arenaVotes: 8900458,
     arenaModels: 417,
     trackedHere: 38,
