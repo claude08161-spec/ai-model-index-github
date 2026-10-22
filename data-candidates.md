@@ -1,4 +1,4 @@
-# Candidates for manual addition (generated 2026-10-21)
+# Candidates for manual addition (generated 2026-10-22)
 
 - `beam10501ba23b` — $0.0 / $0.0 per 1M
 - `c4aiayaexpanse32b` — $0.5 / $1.5 per 1M
