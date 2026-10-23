@@ -85,6 +85,7 @@
 - `jambamini` — $0.2 / $0.4 per 1M
 - `kimik26` — $0.95 / $4.0 per 1M
 - `kimik27code` — $0.95 / $4.0 per 1M
+- `kimik31pro` — $2.0 / $10.0 per 1M
 - `lagunam1` — $0.0 / $0.0 per 1M
 - `lagunas21` — $0.0 / $0.0 per 1M
 - `lagunaxs21` — $0.0 / $0.0 per 1M
